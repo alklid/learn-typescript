@@ -1,0 +1,242 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/prisma"
+}
+
+generator pothos {
+  provider = "prisma-pothos-types"
+  clientOutput = "./prisma"
+  output       = "../lib/pothos-prisma-types.ts"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model bible_statistics {
+  id            BigInt    @id @default(autoincrement())
+  version       BigInt    @default(1)
+  bible         Int       @unique(map: "bible")
+  is_activated  Int       @default(0)
+  need_purchase Int       @default(0)
+  count_request BigInt    @default(0)
+  count_using   BigInt    @default(0)
+  count_like    BigInt    @default(0)
+  count_book    Int       @default(0)
+  count_chapter Int       @default(0)
+  count_verse   Int       @default(0)
+  sort_order    Int       @default(1)
+  date_updated  DateTime?
+  date_created  DateTime
+}
+
+model oauth_state {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt    @default(1)
+  provider     Int
+  state        String    @unique(map: "state") @db.VarChar(36)
+  is_revoked   Int       @default(0)
+  date_revoked DateTime?
+  date_expired DateTime
+  date_updated DateTime?
+  date_created DateTime
+
+  @@unique([provider, state], map: "idx_oauth_state_provider")
+}
+
+model plan {
+  id             BigInt    @id @default(autoincrement())
+  version        BigInt    @default(1)
+  user_id        BigInt
+  round          Int
+  plan_day       Int
+  bible          Int
+  is_completed   Int       @default(0)
+  date_started   DateTime?
+  date_completed DateTime?
+  date_updated   DateTime?
+  date_created   DateTime
+
+  @@unique([user_id, is_completed], map: "idx_plan_user")
+}
+
+model plan_summary {
+  plan_id                 BigInt    @id
+  version                 BigInt    @default(1)
+  count_completed_book    Int       @default(0)
+  count_completed_chapter Int       @default(0)
+  count_completed_verse   Int       @default(0)
+  time_in_millis          BigInt    @default(0)
+  date_updated            DateTime?
+}
+
+model product {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt    @default(1)
+  name         String    @db.VarChar(256)
+  code         String    @unique(map: "code") @db.VarChar(36)
+  type         Int       @default(0)
+  price        BigInt    @default(0)
+  status       Int       @default(0)
+  reference_id BigInt    @default(0)
+  date_updated DateTime?
+  date_created DateTime
+}
+
+model product_order {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt    @default(1)
+  uuid         String    @unique(map: "uuid") @db.VarChar(64)
+  user_id      BigInt    @default(0)
+  product_id   BigInt    @default(0)
+  product_type Int       @default(0)
+  price        BigInt    @default(0)
+  status       Int       @default(0)
+  payment_id   BigInt    @default(0)
+  date_updated DateTime?
+  date_created DateTime
+
+  @@index([user_id, payment_id], map: "idx_user_payment_order")
+  @@index([user_id, product_id, product_type, status], map: "idx_user_product_order")
+}
+
+model product_payment {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt    @default(1)
+  user_id      BigInt    @default(0)
+  order_uuid   String    @db.VarChar(64)
+  payment_key  String    @unique(map: "payment_key") @db.VarChar(200)
+  merchant_id  String    @db.VarChar(14)
+  type         String    @db.VarChar(16)
+  method       String?   @db.VarChar(16)
+  total_amount BigInt    @default(0)
+  status       String    @db.VarChar(16)
+  receipt_url  String    @db.VarChar(512)
+  checkout_url String    @db.VarChar(512)
+  metadata     String?   @db.VarChar(5120)
+  date_updated DateTime?
+  date_created DateTime
+
+  @@index([user_id, order_uuid], map: "idx_user_order_payment")
+  @@index([user_id, payment_key], map: "idx_user_payment")
+}
+
+model sponsor_log {
+  id           BigInt    @id @default(autoincrement())
+  version      BigInt    @default(1)
+  user_id      BigInt
+  provider     Int
+  sponsor_code String    @db.VarChar(32)
+  sponsor_type Int       @default(0)
+  amount       BigInt    @default(0)
+  date_issued  DateTime
+  date_updated DateTime?
+  date_created DateTime
+}
+
+model token {
+  id                                  BigInt    @id @default(autoincrement())
+  version                             BigInt    @default(1)
+  user_id                             BigInt    @unique(map: "idx_token_user")
+  provider_access_token               String?   @db.VarChar(512)
+  provider_access_token_date_expired  DateTime?
+  provider_refresh_token              String?   @db.VarChar(512)
+  provider_refresh_token_date_expired DateTime?
+  access_token                        String?   @db.VarChar(64)
+  access_token_date_expired           DateTime?
+  refresh_token                       String?   @db.VarChar(64)
+  refresh_token_date_expired          DateTime?
+  status                              Int       @default(0)
+  date_latest_login                   DateTime?
+  date_updated                        DateTime?
+  date_created                        DateTime
+
+  @@unique([access_token, status], map: "idx_token_access")
+  @@unique([refresh_token, status], map: "idx_token_refresh")
+}
+
+model typing_book_record {
+  user_id           BigInt
+  round             Int
+  testament         Int
+  book              Int       @default(0)
+  time_in_millis    BigInt    @default(0)
+  is_book_completed Int       @default(0)
+  date_updated      DateTime?
+  date_created      DateTime
+
+  @@id([user_id, round, book])
+}
+
+model typing_chapter_record {
+  user_id              BigInt
+  round                Int
+  book                 Int       @default(0)
+  chapter              Int       @default(0)
+  time_in_millis       BigInt    @default(0)
+  is_chapter_completed Int       @default(0)
+  verses               String    @db.VarChar(4096)
+  date_updated         DateTime?
+  date_created         DateTime
+
+  @@id([user_id, round, book, chapter])
+}
+
+model typing_daily_heatmap {
+  user_id        BigInt
+  round          Int
+  h_year         Int
+  h_month        Int
+  h_day          Int
+  verse          Int      @default(0)
+  time_in_millis BigInt   @default(0)
+  date_created   DateTime
+
+  @@id([user_id, round, h_year, h_month, h_day])
+}
+
+model typing_log {
+  id             BigInt   @id @default(autoincrement())
+  user_id        BigInt
+  round          Int
+  bible          Int
+  book           Int      @default(0)
+  chapter        Int      @default(0)
+  verse          Int      @default(0)
+  time_in_millis BigInt   @default(0)
+  date_created   DateTime
+
+  @@index([user_id, round, book, chapter, verse], map: "idx_typing_log_track")
+}
+
+model user_bible {
+  user_id      BigInt
+  bible        Int
+  is_requested Int       @default(0)
+  is_liked     Int       @default(0)
+  is_paid      Int       @default(0)
+  date_updated DateTime?
+  date_created DateTime
+
+  @@id([user_id, bible])
+}
+
+model users {
+  id                       BigInt    @id @default(autoincrement())
+  version                  BigInt    @default(1)
+  provider                 Int
+  email                    String    @db.VarChar(128)
+  profile_thumb_url        String?   @db.VarChar(256)
+  profile_verse            String    @db.VarChar(400)
+  profile_link             String    @unique(map: "idx_unique_users_profile_link") @db.VarChar(32)
+  nick_name                String    @db.VarChar(32)
+  privileges               String    @db.VarChar(16)
+  is_first_plan_initialize Int       @default(1)
+  is_sponsored             Int       @default(0)
+  is_sign_out              Int       @default(0)
+  date_sign_out            DateTime?
+  date_updated             DateTime?
+  date_created             DateTime
+
+  @@unique([provider, email], map: "idx_users_provider_email")
+}

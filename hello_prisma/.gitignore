@@ -1,0 +1,4 @@
+.env
+lib/prisma
+lib/pothos-prisma-types.ts
+prisma/migrations
