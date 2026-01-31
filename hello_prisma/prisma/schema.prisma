@@ -57,6 +57,9 @@ model plan {
   date_updated   DateTime?
   date_created   DateTime
 
+  // users 테이블과의 관계 정의
+  user           users     @relation(fields: [user_id], references: [id])
+
   @@unique([user_id, is_completed], map: "idx_plan_user")
 }
 
@@ -237,6 +240,9 @@ model users {
   date_sign_out            DateTime?
   date_updated             DateTime?
   date_created             DateTime
+
+  // plan 테이블과의 역관계 정의
+  plan                     plan[]
 
   @@unique([provider, email], map: "idx_users_provider_email")
 }
